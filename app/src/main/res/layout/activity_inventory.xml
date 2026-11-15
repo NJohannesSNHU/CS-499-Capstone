@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -9,13 +11,16 @@
         android:orientation="vertical"
         android:padding="16dp">
 
+        <!-- Screen Title -->
         <TextView
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Inventory Management"
             android:textSize="24sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
 
+        <!-- Logout Button -->
         <Button
             android:id="@+id/btnLogout"
             android:layout_width="wrap_content"
@@ -23,68 +28,137 @@
             android:layout_gravity="end"
             android:text="Logout" />
 
+        <!-- Item Name Input -->
         <EditText
             android:id="@+id/etItemName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
             android:hint="Item Name"
-            android:layout_marginTop="16dp"/>
+            android:inputType="textCapSentences"
+            android:maxLength="50" />
 
+        <!-- Quantity Input -->
         <EditText
             android:id="@+id/etQuantity"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Quantity"
-            android:inputType="number"
-            android:layout_marginTop="8dp"/>
+            android:minHeight="48dp"
+            android:layout_marginTop="8dp"
+            android:hint="Quantity (+ to add, - to remove)"
+            android:inputType="numberSigned"
+            android:importantForAutofill="no" />
 
+
+        <!-- Validation and Status Messages -->
+        <TextView
+            android:id="@+id/tvStatusMessage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textColor="#B00020"
+            android:visibility="gone" />
+
+        <!-- Add Item Button -->
         <Button
             android:id="@+id/btnAddItem"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Add Item"
-            android:layout_marginTop="12dp"/>
+            android:layout_marginTop="12dp"
+            android:text="Add Item" />
 
-
+        <!-- SMS Notifications Button -->
         <Button
             android:id="@+id/btnNotifications"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="SMS Notifications"
-            android:layout_marginTop="12dp"/>
+            android:layout_marginTop="12dp"
+            android:text="SMS Notifications" />
 
-
-
-        <TableLayout
-            android:id="@+id/tableInventory"
+        <!-- Inventory Section Heading -->
+        <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp">
+            android:layout_marginTop="24dp"
+            android:text="Current Inventory"
+            android:textSize="20sp"
+            android:textStyle="bold" />
 
-            <TableRow>
+        <!-- Empty Inventory Message -->
+        <TextView
+            android:id="@+id/tvEmptyInventory"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:gravity="center"
+            android:padding="16dp"
+            android:text="Your inventory is currently empty."
+            android:visibility="gone" />
 
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Item"
-                    android:textStyle="bold"/>
+        <!-- Horizontal Scrolling for Inventory Table -->
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:fillViewport="true"
+            android:scrollbars="horizontal">
 
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Qty"
-                    android:textStyle="bold"/>
+            <!-- Inventory Table -->
+            <TableLayout
+                android:id="@+id/tableInventory"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:stretchColumns="0,1">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Action"
-                    android:textStyle="bold"/>
-            </TableRow>
+                <!-- Table Header -->
+                <TableRow
+                    android:paddingTop="8dp"
+                    android:paddingBottom="8dp">
 
-        </TableLayout>
+                    <TextView
+                        android:layout_width="120dp"
+                        android:layout_height="wrap_content"
+                        android:padding="8dp"
+                        android:text="Item"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="64dp"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:padding="8dp"
+                        android:text="Qty"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:padding="8dp"
+                        android:text="−"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:padding="8dp"
+                        android:text="+"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:padding="8dp"
+                        android:text="Delete"
+                        android:textStyle="bold" />
+
+                </TableRow>
+
+            </TableLayout>
+
+        </HorizontalScrollView>
 
     </LinearLayout>
 

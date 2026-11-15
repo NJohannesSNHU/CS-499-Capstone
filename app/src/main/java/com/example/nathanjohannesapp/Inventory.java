@@ -1,7 +1,9 @@
+
 package com.example.nathanjohannesapp;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TableLayout;
@@ -10,6 +12,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModelProvider;
 
 import java.util.List;
 
@@ -17,41 +20,95 @@ public class Inventory extends AppCompatActivity {
 
     private EditText itemName;
     private EditText quantity;
-    private Button addButton;
-    private Button notificationButton;
     private TableLayout tableInventory;
-    private DatabaseHelper db;
-    Button logoutButton;
+    private TextView emptyInventory;
+    private TextView statusMessage;
+
+    private InventoryViewModel viewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_inventory);
 
-        // Initialize database
-        db = new DatabaseHelper(this);
-
-        // Connect views to XML
+        // Connect views to the XML layout.
         itemName = findViewById(R.id.etItemName);
         quantity = findViewById(R.id.etQuantity);
-        addButton = findViewById(R.id.btnAddItem);
         tableInventory = findViewById(R.id.tableInventory);
+        emptyInventory = findViewById(R.id.tvEmptyInventory);
+        statusMessage = findViewById(R.id.tvStatusMessage);
 
-        // Only include this if you added the button to XML
-        notificationButton = findViewById(R.id.btnNotifications);
+        Button addButton = findViewById(R.id.btnAddItem);
+        Button logoutButton = findViewById(R.id.btnLogout);
+        Button notificationButton =
+                findViewById(R.id.btnNotifications);
 
-        // Display saved items
-        displayItems();
+        // Set up the application's layers.
+        InventoryRepository repository =
+                new InventoryRepository(this);
 
-        logoutButton = findViewById(R.id.btnLogout);
+        InventoryService service =
+                new InventoryService(repository);
 
+        InventoryViewModelFactory factory =
+                new InventoryViewModelFactory(service);
+
+        viewModel = new ViewModelProvider(
+                this, factory
+        ).get(InventoryViewModel.class);
+
+        // Observe changes to inventory records.
+        viewModel.getItems().observe(this, items -> {
+            displayItems(items);
+        });
+
+        // Observe status and validation messages.
+        viewModel.getMessage().observe(this, message -> {
+            if (message != null && !message.isEmpty()) {
+                statusMessage.setText(message);
+                statusMessage.setVisibility(View.VISIBLE);
+
+                Toast.makeText(
+                        this,
+                        message,
+                        Toast.LENGTH_SHORT
+                ).show();
+            }
+        });
+
+        // Add a new item or update an existing one.
+        addButton.setOnClickListener(v -> {
+
+            String name =
+                    itemName.getText().toString().trim();
+
+            String qty =
+                    quantity.getText().toString().trim();
+
+            String error =
+                    InputValidator.validateItem(name, qty);
+
+            if (error != null) {
+                statusMessage.setText(error);
+                statusMessage.setVisibility(View.VISIBLE);
+                return;
+            }
+
+            boolean success = viewModel.addItem(name, qty);
+
+            if (success) {
+                itemName.setText("");
+                quantity.setText("");
+            }
+        });
+
+        // Log out.
         logoutButton.setOnClickListener(v -> {
 
-            Intent intent =
-                    new Intent(
-                            Inventory.this,
-                            MainActivity.class
-                    );
+            Intent intent = new Intent(
+                    Inventory.this,
+                    MainActivity.class
+            );
 
             intent.setFlags(
                     Intent.FLAG_ACTIVITY_NEW_TASK |
@@ -61,70 +118,24 @@ public class Inventory extends AppCompatActivity {
             startActivity(intent);
         });
 
-        // Add item button
-        addButton.setOnClickListener(v -> {
-
-            String item =
-                    itemName.getText().toString().trim();
-
-            String qtyText =
-                    quantity.getText().toString().trim();
-
-            if (item.isEmpty() || qtyText.isEmpty()) {
-                Toast.makeText(
-                        this,
-                        "Please enter an item and quantity.",
-                        Toast.LENGTH_SHORT
-                ).show();
-                return;
-            }
-
-            int qty = Integer.parseInt(qtyText);
-
-            boolean success =
-                    db.insertItem(item, qty);
-
-            if (success) {
-
-                Toast.makeText(
-                        this,
-                        "Item Added",
-                        Toast.LENGTH_SHORT
-                ).show();
-
-                itemName.setText("");
-                quantity.setText("");
-
-                displayItems();
-
-            } else {
-
-                Toast.makeText(
-                        this,
-                        "Unable to add item.",
-                        Toast.LENGTH_SHORT
-                ).show();
-            }
-        });
-
-        // Open Notifications screen
+        // Open the notifications screen.
         if (notificationButton != null) {
             notificationButton.setOnClickListener(v -> {
 
-                Intent intent =
-                        new Intent(
-                                Inventory.this,
-                                Notifications.class
-                        );
+                Intent intent = new Intent(
+                        Inventory.this,
+                        Notifications.class
+                );
 
                 startActivity(intent);
             });
         }
     }
 
-    private void displayItems() {
+    // Display the current inventory.
+    private void displayItems(List<InventoryItem> items) {
 
-        // Keep the header row
+        // Keep the table header.
         if (tableInventory.getChildCount() > 1) {
             tableInventory.removeViews(
                     1,
@@ -132,51 +143,109 @@ public class Inventory extends AppCompatActivity {
             );
         }
 
-        List<InventoryItem> items =
-                db.getAllItems();
+        // Show an empty inventory message.
+        if (items == null || items.isEmpty()) {
+            emptyInventory.setVisibility(View.VISIBLE);
+            return;
+        }
+
+        emptyInventory.setVisibility(View.GONE);
 
         for (InventoryItem item : items) {
 
             TableRow row = new TableRow(this);
 
-            // ITEM NAME COLUMN
+            // Item name.
             TextView name = new TextView(this);
-            TableRow.LayoutParams nameParams =
-                    new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1f);
-            name.setLayoutParams(nameParams);
-
-            // QTY COLUMN
-            TextView qty = new TextView(this);
-            TableRow.LayoutParams qtyParams =
-                    new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1f);
-            qty.setLayoutParams(qtyParams);
-
-            // ACTION COLUMN (DELETE BUTTON)
-            Button delete = new Button(this);
-            TableRow.LayoutParams deleteParams =
-                    new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1f);
-            delete.setLayoutParams(deleteParams);
-
             name.setText(item.getItemName());
-            qty.setText(String.valueOf(item.getQuantity()));
-            delete.setText("Delete");
 
-            delete.setOnClickListener(v -> {
+            name.setLayoutParams(
+                    new TableRow.LayoutParams(
+                            0,
+                            TableRow.LayoutParams.WRAP_CONTENT,
+                            1f
+                    )
+            );
 
-                db.deleteItem(item.getId());
+            // Quantity.
+            TextView qty = new TextView(this);
+            qty.setText(
+                    String.valueOf(item.getQuantity())
+            );
 
-                Toast.makeText(this,
-                        "Item Deleted",
-                        Toast.LENGTH_SHORT).show();
+            qty.setLayoutParams(
+                    new TableRow.LayoutParams(
+                            0,
+                            TableRow.LayoutParams.WRAP_CONTENT,
+                            1f
+                    )
+            );
 
-                displayItems();
-            });
+            // Decrease quantity.
+            Button minusButton = new Button(this);
+            minusButton.setText("−");
+            minusButton.setTextSize(14);
+            minusButton.setMinWidth(0);
+            minusButton.setMinimumWidth(0);
+            minusButton.setPadding(0, 0, 0, 0);
 
+            minusButton.setOnClickListener(v ->
+                    viewModel.adjustQuantity(item.getId(), -1)
+            );
+
+            // Increase quantity.
+            Button plusButton = new Button(this);
+            plusButton.setText("+");
+            plusButton.setTextSize(14);
+            plusButton.setMinWidth(0);
+            plusButton.setMinimumWidth(0);
+            plusButton.setPadding(0, 0, 0, 0);
+
+            plusButton.setOnClickListener(v ->
+                    viewModel.adjustQuantity(item.getId(), 1)
+            );
+
+            // Delete item.
+            Button deleteButton = new Button(this);
+            deleteButton.setText("Delete");
+            deleteButton.setTextSize(12);
+            deleteButton.setAllCaps(false);
+            deleteButton.setMinWidth(0);
+            deleteButton.setMinimumWidth(0);
+            deleteButton.setPadding(4, 0, 4, 0);
+
+            deleteButton.setOnClickListener(v ->
+                    viewModel.deleteItem(item.getId())
+            );
+
+            // Add views to the table row.
             row.addView(name);
             row.addView(qty);
-            row.addView(delete);
+
+            TableRow.LayoutParams minusParams =
+                    new TableRow.LayoutParams(dp(48), dp(48));
+            minusParams.setMargins(dp(2), dp(2), dp(2), dp(2));
+
+            TableRow.LayoutParams plusParams =
+                    new TableRow.LayoutParams(dp(48), dp(48));
+            plusParams.setMargins(dp(2), dp(2), dp(2), dp(2));
+
+            TableRow.LayoutParams deleteParams =
+                    new TableRow.LayoutParams(
+                            TableRow.LayoutParams.WRAP_CONTENT,
+                            dp(48));
+            deleteParams.setMargins(dp(2), dp(2), dp(2), dp(2));
+
+            row.addView(minusButton, minusParams);
+            row.addView(plusButton, plusParams);
+            row.addView(deleteButton, deleteParams);
 
             tableInventory.addView(row);
         }
+    }
+    private int dp(int value) {
+        return Math.round(
+                value * getResources().getDisplayMetrics().density
+        );
     }
 }
