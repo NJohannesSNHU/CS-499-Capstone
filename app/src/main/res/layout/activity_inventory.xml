@@ -11,6 +11,16 @@
         android:orientation="vertical"
         android:padding="16dp">
 
+        <!-- Inventory Banner -->
+        <ImageView
+            android:id="@+id/imgInventoryBanner"
+            android:layout_width="match_parent"
+            android:layout_height="150dp"
+            android:layout_marginBottom="12dp"
+            android:src="@drawable/inventory_banner"
+            android:scaleType="centerCrop"
+            android:contentDescription="Inventory warehouse banner" />
+
         <!-- Screen Title -->
         <TextView
             android:layout_width="match_parent"

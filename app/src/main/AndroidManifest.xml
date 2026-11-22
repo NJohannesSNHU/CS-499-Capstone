@@ -2,7 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-permission android:name="android.permission.SEND_SMS"/>
+    <!-- SMS permission -->
+    <uses-permission
+        android:name="android.permission.SEND_SMS" />
 
     <uses-feature
         android:name="android.hardware.telephony"
@@ -18,21 +20,28 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.NathanJohannesApp">
 
+        <!-- Notifications Screen -->
         <activity
             android:name=".Notifications"
             android:exported="false" />
 
+        <!-- Inventory Screen -->
         <activity
             android:name=".Inventory"
             android:exported="false" />
 
+        <!-- Login Screen -->
         <activity
             android:name=".MainActivity"
+            android:exported="false" />
+
+        <!-- Splash Screen - App Launcher -->
+        <activity
+            android:name=".SplashActivity"
             android:exported="true">
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
