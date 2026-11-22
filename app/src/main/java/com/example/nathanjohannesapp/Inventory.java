@@ -3,6 +3,7 @@ package com.example.nathanjohannesapp;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -10,6 +11,11 @@ import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
@@ -37,6 +43,12 @@ public class Inventory extends AppCompatActivity {
         tableInventory = findViewById(R.id.tableInventory);
         emptyInventory = findViewById(R.id.tvEmptyInventory);
         statusMessage = findViewById(R.id.tvStatusMessage);
+        EditText searchInventory =
+                findViewById(R.id.etSearchInventory);
+
+        Spinner sortSpinner =
+                findViewById(R.id.spinnerSortInventory);
+
 
         Button addButton = findViewById(R.id.btnAddItem);
         Button logoutButton = findViewById(R.id.btnLogout);
@@ -56,6 +68,74 @@ public class Inventory extends AppCompatActivity {
         viewModel = new ViewModelProvider(
                 this, factory
         ).get(InventoryViewModel.class);
+
+// Search inventory as the user types.
+        searchInventory.addTextChangedListener(new TextWatcher() {
+
+            @Override
+            public void beforeTextChanged(
+                    CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(
+                    CharSequence s, int start, int before, int count) {
+
+                viewModel.searchItems(s.toString());
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        });
+
+// Set up inventory sorting options.
+        String[] sortOptions = {
+                "Name (A-Z)",
+                "Name (Z-A)",
+                "Quantity (Low-High)",
+                "Quantity (High-Low)"
+        };
+
+        String[] sortValues = {
+                "NAME_ASC",
+                "NAME_DESC",
+                "QUANTITY_LOW",
+                "QUANTITY_HIGH"
+        };
+
+        ArrayAdapter<String> sortAdapter =
+                new ArrayAdapter<>(
+                        this,
+                        android.R.layout.simple_spinner_item,
+                        sortOptions
+                );
+
+        sortAdapter.setDropDownViewResource(
+                android.R.layout.simple_spinner_dropdown_item
+        );
+
+        sortSpinner.setAdapter(sortAdapter);
+
+// Apply the selected sorting algorithm.
+        sortSpinner.setOnItemSelectedListener(
+                new AdapterView.OnItemSelectedListener() {
+
+                    @Override
+                    public void onItemSelected(
+                            AdapterView<?> parent,
+                            View view,
+                            int position,
+                            long id) {
+
+                        viewModel.setSortOption(sortValues[position]);
+                    }
+
+                    @Override
+                    public void onNothingSelected(AdapterView<?> parent) {
+                    }
+                });
+
 
         // Observe changes to inventory records.
         viewModel.getItems().observe(this, items -> {
@@ -155,29 +235,29 @@ public class Inventory extends AppCompatActivity {
 
             TableRow row = new TableRow(this);
 
-            // Item name.
+            // Item name - aligned under Item header.
             TextView name = new TextView(this);
             name.setText(item.getItemName());
+            name.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
+            name.setPadding(dp(8), dp(8), dp(8), dp(8));
 
             name.setLayoutParams(
                     new TableRow.LayoutParams(
-                            0,
-                            TableRow.LayoutParams.WRAP_CONTENT,
-                            1f
+                            dp(120),
+                            TableRow.LayoutParams.WRAP_CONTENT
                     )
             );
 
-            // Quantity.
+            // Quantity - centered directly under Qty header.
             TextView qty = new TextView(this);
-            qty.setText(
-                    String.valueOf(item.getQuantity())
-            );
+            qty.setText(String.valueOf(item.getQuantity()));
+            qty.setGravity(Gravity.CENTER);
+            qty.setPadding(dp(8), dp(8), dp(8), dp(8));
 
             qty.setLayoutParams(
                     new TableRow.LayoutParams(
-                            0,
-                            TableRow.LayoutParams.WRAP_CONTENT,
-                            1f
+                            dp(64),
+                            TableRow.LayoutParams.WRAP_CONTENT
                     )
             );
 

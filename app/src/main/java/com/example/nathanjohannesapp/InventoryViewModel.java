@@ -12,6 +12,9 @@ public class InventoryViewModel extends ViewModel {
 
     private final InventoryService service;
 
+    private String searchQuery = "";
+    private String sortOption = "NAME_ASC";
+
     private final MutableLiveData<List<InventoryItem>> items =
             new MutableLiveData<>(new ArrayList<>());
 
@@ -31,12 +34,24 @@ public class InventoryViewModel extends ViewModel {
         return message;
     }
 
-    // Reload inventory records.
+    // Reload inventory and apply current search/sort options.
     public void refreshItems() {
+
         if (service != null) {
-            items.setValue(service.getAllItems());
+
+            // Synchronize the in-memory index with SQLite.
+            service.refreshIndex();
+
+            List<InventoryItem> filteredItems =
+                    service.searchItems(searchQuery);
+
+            List<InventoryItem> sortedItems =
+                    service.sortItems(filteredItems, sortOption);
+
+            items.setValue(sortedItems);
         }
     }
+
 
     // Add an item or update an existing quantity.
     public boolean addItem(String name, String quantity) {
@@ -71,5 +86,17 @@ public class InventoryViewModel extends ViewModel {
         if (result.isSuccess()) {
             refreshItems();
         }
+    }
+
+    // NEW: Search inventory items.
+    public void searchItems(String query) {
+        searchQuery = query == null ? "" : query;
+        refreshItems();
+    }
+
+    // NEW: Change the sorting option.
+    public void setSortOption(String option) {
+        sortOption = option;
+        refreshItems();
     }
 }
